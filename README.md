@@ -1,6 +1,6 @@
 # Pseudo-random distribution calculator
 
-A client-only SvelteKit calculator for Dota 2-style pseudo-random distribution (PRD). Enter a target long-run proc rate to calculate its C constant and inspect the conditional, exact, and cumulative chance for every attempt through the guaranteed proc.
+A client-only SvelteKit calculator for Dota 2-style pseudo-random distribution (PRD). Enter a target long-run proc rate to calculate its C constant, inspect every attempt, and compare the conditional, exact, and cumulative chance in an interactive graph.
 
 ## How it works
 
