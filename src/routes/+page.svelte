@@ -17,7 +17,7 @@
 
 	let targetPercentage = $state<number | undefined>(25);
 	let highlightedAttempt = $state<number | null>(null);
-	let rowElements: Record<number, HTMLTableRowElement> = {};
+	let tableViewport = $state<HTMLDivElement>();
 
 	let isValidTarget = $derived(
 		typeof targetPercentage === 'number' &&
@@ -45,7 +45,9 @@
 		if (attempt === null || !window.matchMedia('(min-width: 1280px)').matches) return;
 
 		requestAnimationFrame(() => {
-			rowElements[attempt]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+			tableViewport
+				?.querySelector<HTMLTableRowElement>(`[data-attempt="${attempt}"]`)
+				?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 		});
 	}
 </script>
@@ -161,7 +163,7 @@
 			</header>
 
 			{#if result}
-				<div class="min-h-0 flex-1 overflow-auto">
+				<div class="min-h-0 flex-1 overflow-auto" bind:this={tableViewport}>
 					<Table.Root class="table-fixed">
 						<Table.Caption class="sr-only">Probability metrics by attempt</Table.Caption>
 						<Table.Header class="sticky top-0 z-10 bg-background">
@@ -175,7 +177,7 @@
 						<Table.Body>
 							{#each result.rows as row (row.attempt)}
 								<Table.Row
-									bind:ref={rowElements[row.attempt]}
+									data-attempt={row.attempt}
 									tabindex={0}
 									aria-selected={highlightedAttempt === row.attempt}
 									class={highlightedAttempt === row.attempt ? 'bg-muted' : ''}
