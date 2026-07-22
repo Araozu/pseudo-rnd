@@ -15,9 +15,9 @@
 	const padding = { top: 24, right: 24, bottom: 42, left: 56 };
 	const yTicks = [0, 0.25, 0.5, 0.75, 1];
 	const chartConfig = {
-		conditionalChance: { label: 'Next chance', color: 'var(--chart-3)' },
+		conditionalChance: { label: 'Next chance', color: 'var(--chart-1)' },
 		exactChance: { label: 'Proc here', color: 'var(--chart-2)' },
-		cumulativeChance: { label: 'Proc by now', color: 'var(--foreground)' }
+		cumulativeChance: { label: 'Proc by now', color: 'var(--chart-3)' }
 	} satisfies Chart.ChartConfig;
 
 	let chartWidth = $state(720);
@@ -235,15 +235,21 @@
 				<dl class="space-y-1.5 tabular-nums">
 					<div class="flex items-center justify-between gap-5">
 						<dt class="text-muted-foreground">Next chance</dt>
-						<dd>{percentFormatter.format(highlightedRow.conditionalChance)}</dd>
+						<dd class="font-medium text-chart-1">
+							{percentFormatter.format(highlightedRow.conditionalChance)}
+						</dd>
 					</div>
 					<div class="flex items-center justify-between gap-5">
 						<dt class="text-muted-foreground">Proc here</dt>
-						<dd>{percentFormatter.format(highlightedRow.exactChance)}</dd>
+						<dd class="font-medium text-chart-2">
+							{percentFormatter.format(highlightedRow.exactChance)}
+						</dd>
 					</div>
 					<div class="flex items-center justify-between gap-5 font-medium">
 						<dt>Proc by now</dt>
-						<dd>{percentFormatter.format(highlightedRow.cumulativeChance)}</dd>
+						<dd class="text-chart-3">
+							{percentFormatter.format(highlightedRow.cumulativeChance)}
+						</dd>
 					</div>
 				</dl>
 			</div>

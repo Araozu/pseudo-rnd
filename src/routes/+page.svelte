@@ -169,9 +169,9 @@
 						<Table.Header class="sticky top-0 z-10 bg-background">
 							<Table.Row>
 								<Table.Head class="w-16 px-3">Attempt</Table.Head>
-								<Table.Head class="px-2 text-right">Next chance</Table.Head>
-								<Table.Head class="px-2 text-right">Proc here</Table.Head>
-								<Table.Head class="px-3 text-right">Proc by now</Table.Head>
+								<Table.Head class="px-2 text-right text-chart-1">Next chance</Table.Head>
+								<Table.Head class="px-2 text-right text-chart-2">Proc here</Table.Head>
+								<Table.Head class="px-3 text-right text-chart-3">Proc by now</Table.Head>
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
@@ -187,13 +187,13 @@
 									onblur={() => (highlightedAttempt = null)}
 								>
 									<Table.Cell class="px-3 font-medium tabular-nums">{row.attempt}</Table.Cell>
-									<Table.Cell class="px-2 text-right tabular-nums">
+									<Table.Cell class="px-2 text-right text-chart-1 tabular-nums">
 										{formatPercent(row.conditionalChance)}
 									</Table.Cell>
-									<Table.Cell class="px-2 text-right text-muted-foreground tabular-nums">
+									<Table.Cell class="px-2 text-right text-chart-2 tabular-nums">
 										{formatPercent(row.exactChance)}
 									</Table.Cell>
-									<Table.Cell class="px-3 text-right font-medium tabular-nums">
+									<Table.Cell class="px-3 text-right font-medium text-chart-3 tabular-nums">
 										{formatPercent(row.cumulativeChance)}
 									</Table.Cell>
 								</Table.Row>
@@ -215,7 +215,7 @@
 				<h2 class="font-medium">Metric growth</h2>
 				<div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
 					<span class="flex items-center gap-1.5">
-						<span class="h-px w-5 border-t-2 border-dashed border-chart-3"></span>
+						<span class="h-px w-5 border-t-2 border-dashed border-chart-1"></span>
 						Next chance
 					</span>
 					<span class="flex items-center gap-1.5">
@@ -223,7 +223,7 @@
 						Proc here
 					</span>
 					<span class="flex items-center gap-1.5">
-						<span class="h-0.5 w-5 bg-foreground"></span>
+						<span class="h-0.5 w-5 bg-chart-3"></span>
 						Proc by now
 					</span>
 				</div>
