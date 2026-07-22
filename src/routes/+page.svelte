@@ -65,8 +65,8 @@
 			</div>
 			<h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Pseudo-random calculator</h1>
 			<p class="mt-3 max-w-xl text-base leading-7 text-muted-foreground">
-				Find the C constant that produces a target long-run proc rate, then inspect the chance after
-				every failed attempt.
+				Find the C constant that produces a target long-run proc rate, then inspect the accumulated
+				chance of a proc by every attempt.
 			</p>
 		</div>
 	</header>
@@ -133,8 +133,9 @@
 					</p>
 					<Separator />
 					<p>
-						C is solved numerically until the expected cycle length equals
-						<span class="font-mono text-foreground">1 / target</span>.
+						The accumulated chance by N is
+						<span class="font-mono text-foreground">1 - ∏(1 - min(1, C × i))</span> across every roll
+						so far.
 					</p>
 				</Card.Content>
 			</Card.Root>
@@ -161,15 +162,15 @@
 					</Card.Root>
 					<Card.Root size="sm">
 						<Card.Header>
-							<Card.Description>Expected attempt</Card.Description>
+							<Card.Description>50% proc chance by</Card.Description>
 							<Card.Title class="text-xl tabular-nums">
-								{result.expectedAttempts.toFixed(2)}
+								Attempt {result.medianAttempt}
 							</Card.Title>
 						</Card.Header>
 					</Card.Root>
 					<Card.Root size="sm">
 						<Card.Header>
-							<Card.Description>Guaranteed by</Card.Description>
+							<Card.Description>100% proc chance by</Card.Description>
 							<Card.Title class="text-xl tabular-nums">
 								Attempt {result.guaranteedAttempt}
 							</Card.Title>
@@ -183,7 +184,7 @@
 							<div>
 								<Card.Title class="flex items-center gap-2">
 									<Target class="size-4 text-muted-foreground" aria-hidden="true" />
-									Chance progression
+									Accumulated chance progression
 								</Card.Title>
 								<Card.Description class="mt-1.5">
 									Half of procs happen by attempt {result.medianAttempt}; a proc is certain by
@@ -196,14 +197,16 @@
 					<Card.Content>
 						<div class="max-h-[42rem] overflow-y-auto rounded-lg border border-border">
 							<Table.Root>
-								<Table.Caption class="sr-only">Pseudo-random probability by attempt</Table.Caption>
+								<Table.Caption class="sr-only">
+									Accumulated pseudo-random proc probability by attempt
+								</Table.Caption>
 								<Table.Header class="sticky top-0 z-10 bg-background">
 									<Table.Row>
 										<Table.Head class="w-20">Attempt</Table.Head>
 										<Table.Head>Failures</Table.Head>
-										<Table.Head class="min-w-36">Next chance</Table.Head>
-										<Table.Head class="text-right">Proc here</Table.Head>
-										<Table.Head class="text-right">Proc by now</Table.Head>
+										<Table.Head class="min-w-52">Proc by now</Table.Head>
+										<Table.Head class="text-right">Next roll</Table.Head>
+										<Table.Head class="text-right">Proc on this attempt</Table.Head>
 									</Table.Row>
 								</Table.Header>
 								<Table.Body>
@@ -216,21 +219,21 @@
 												{row.failuresBefore}
 											</Table.Cell>
 											<Table.Cell>
-												<div class="flex min-w-32 items-center gap-3">
-													<Progress value={row.conditionalChance * 100} class="w-16 shrink-0" />
-													<span class="tabular-nums">
-														{formatPercent(row.conditionalChance)}
+												<div class="flex min-w-48 items-center gap-3">
+													<Progress value={row.cumulativeChance * 100} class="w-24 shrink-0" />
+													<span class="font-medium tabular-nums">
+														{formatPercent(row.cumulativeChance)}
 													</span>
-													{#if row.isGuaranteed}
-														<Badge variant="secondary">Guaranteed</Badge>
+													{#if row.isCertainByNow}
+														<Badge variant="secondary">100% cumulative</Badge>
 													{/if}
 												</div>
 											</Table.Cell>
 											<Table.Cell class="text-right tabular-nums">
-												{formatPercent(row.exactChance)}
+												{formatPercent(row.conditionalChance)}
 											</Table.Cell>
 											<Table.Cell class="text-right tabular-nums">
-												{formatPercent(row.cumulativeChance)}
+												{formatPercent(row.exactChance)}
 											</Table.Cell>
 										</Table.Row>
 									{/each}

@@ -5,7 +5,7 @@ export type PrdRow = {
 	exactChance: number;
 	cumulativeChance: number;
 	remainingChance: number;
-	isGuaranteed: boolean;
+	isCertainByNow: boolean;
 };
 
 export type PrdResult = {
@@ -80,7 +80,7 @@ export function calculatePrd(targetChance: number): PrdResult {
 			exactChance,
 			cumulativeChance: 1 - remainingChance,
 			remainingChance,
-			isGuaranteed: conditionalChance === 1
+			isCertainByNow: remainingChance === 0
 		});
 
 		chanceOfReachingAttempt = remainingChance;
