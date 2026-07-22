@@ -29,6 +29,7 @@
 		if (!isValidTarget || targetPercentage === undefined) return null;
 		return calculatePrd(targetPercentage / 100);
 	});
+	let chartRows = $derived(result ? result.rows.slice(0, result.cumulativeCertainAttempt) : []);
 
 	function clearHighlight() {
 		highlightedAttempt = null;
@@ -143,7 +144,7 @@
 								</div>
 								<div class="flex items-baseline justify-between gap-3">
 									<dt class="text-muted-foreground">100% proc by</dt>
-									<dd class="font-medium tabular-nums">#{result.guaranteedAttempt}</dd>
+									<dd class="font-medium tabular-nums">#{result.cumulativeCertainAttempt}</dd>
 								</div>
 							</dl>
 						</Card.Content>
@@ -180,7 +181,7 @@
 									data-attempt={row.attempt}
 									tabindex={0}
 									aria-selected={highlightedAttempt === row.attempt}
-									class={row.isCertainByNow
+									class={row.attempt === result.cumulativeCertainAttempt
 										? highlightedAttempt === row.attempt
 											? 'bg-chart-3/20 hover:bg-chart-3/20'
 											: 'bg-chart-3/10 hover:bg-chart-3/15'
@@ -237,7 +238,7 @@
 
 			{#if result}
 				<div class="min-h-0 flex-1 p-3 sm:p-5">
-					<PrdChart rows={result.rows} bind:highlightedAttempt onhighlight={highlightTableRow} />
+					<PrdChart rows={chartRows} bind:highlightedAttempt onhighlight={highlightTableRow} />
 				</div>
 			{:else}
 				<div class="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">

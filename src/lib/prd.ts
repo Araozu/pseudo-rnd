@@ -5,7 +5,6 @@ export type PrdRow = {
 	exactChance: number;
 	cumulativeChance: number;
 	remainingChance: number;
-	isCertainByNow: boolean;
 };
 
 export type PrdResult = {
@@ -13,12 +12,14 @@ export type PrdResult = {
 	constant: number;
 	expectedAttempts: number;
 	guaranteedAttempt: number;
+	cumulativeCertainAttempt: number;
 	medianAttempt: number;
 	rows: PrdRow[];
 };
 
 const SOLVER_ITERATIONS = 80;
 const NEGLIGIBLE_CHANCE = 1e-16;
+const DISPLAYED_CERTAINTY_THRESHOLD = 0.9999995;
 
 function expectedAttemptsForConstant(constant: number): number {
 	if (constant >= 1) return 1;
@@ -79,8 +80,7 @@ export function calculatePrd(targetChance: number): PrdResult {
 			conditionalChance,
 			exactChance,
 			cumulativeChance: 1 - remainingChance,
-			remainingChance,
-			isCertainByNow: remainingChance === 0
+			remainingChance
 		});
 
 		chanceOfReachingAttempt = remainingChance;
@@ -91,6 +91,9 @@ export function calculatePrd(targetChance: number): PrdResult {
 		constant,
 		expectedAttempts: expectedAttemptsForConstant(constant),
 		guaranteedAttempt,
+		cumulativeCertainAttempt:
+			rows.find((row) => row.cumulativeChance >= DISPLAYED_CERTAINTY_THRESHOLD)?.attempt ??
+			guaranteedAttempt,
 		medianAttempt: rows.find((row) => row.cumulativeChance >= 0.5)?.attempt ?? guaranteedAttempt,
 		rows
 	};
