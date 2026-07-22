@@ -9,6 +9,10 @@
 	import { calculatePrd } from '$lib/prd';
 
 	const presets = [10, 15, 20, 25, 30, 50];
+	const INPUT_DEBOUNCE_MS = 180;
+	const TABLE_HEADER_HEIGHT = 40;
+	const TABLE_ROW_HEIGHT = 36;
+	const TABLE_OVERSCAN = 8;
 	const percentFormatter = new Intl.NumberFormat('en-US', {
 		style: 'percent',
 		minimumFractionDigits: 2,
@@ -16,8 +20,11 @@
 	});
 
 	let targetPercentage = $state<number | undefined>(25);
+	let calculatedPercentage = $state<number | undefined>(25);
 	let highlightedAttempt = $state<number | null>(null);
 	let tableViewport = $state<HTMLDivElement>();
+	let tableViewportHeight = $state(0);
+	let tableScrollTop = $state(0);
 
 	let isValidTarget = $derived(
 		typeof targetPercentage === 'number' &&
@@ -26,13 +33,48 @@
 			targetPercentage <= 99
 	);
 	let result = $derived.by(() => {
-		if (!isValidTarget || targetPercentage === undefined) return null;
-		return calculatePrd(targetPercentage / 100);
+		if (
+			typeof calculatedPercentage !== 'number' ||
+			!Number.isFinite(calculatedPercentage) ||
+			calculatedPercentage < 1 ||
+			calculatedPercentage > 99
+		) {
+			return null;
+		}
+
+		return calculatePrd(calculatedPercentage / 100);
 	});
 	let chartRows = $derived(result ? result.rows.slice(0, result.cumulativeCertainAttempt) : []);
+	let virtualTable = $derived.by(() => {
+		const rows = result?.rows ?? [];
+		const visibleRowCount = Math.ceil(tableViewportHeight / TABLE_ROW_HEIGHT);
+		const start = Math.max(0, Math.floor(tableScrollTop / TABLE_ROW_HEIGHT) - TABLE_OVERSCAN);
+		const end = Math.min(rows.length, start + visibleRowCount + TABLE_OVERSCAN * 2);
+
+		return {
+			rows: rows.slice(start, end),
+			topPadding: start * TABLE_ROW_HEIGHT,
+			bottomPadding: (rows.length - end) * TABLE_ROW_HEIGHT
+		};
+	});
+
+	$effect(() => {
+		const nextTarget = targetPercentage;
+		if (nextTarget === calculatedPercentage) return;
+
+		const timeout = window.setTimeout(() => commitTarget(nextTarget), INPUT_DEBOUNCE_MS);
+		return () => window.clearTimeout(timeout);
+	});
 
 	function clearHighlight() {
 		highlightedAttempt = null;
+	}
+
+	function commitTarget(target: number | undefined) {
+		calculatedPercentage = target;
+		highlightedAttempt = null;
+		tableScrollTop = 0;
+		if (tableViewport) tableViewport.scrollTop = 0;
 	}
 
 	function formatPercent(value: number): string {
@@ -45,11 +87,21 @@
 		highlightedAttempt = attempt;
 		if (attempt === null || !window.matchMedia('(min-width: 1280px)').matches) return;
 
-		requestAnimationFrame(() => {
-			tableViewport
-				?.querySelector<HTMLTableRowElement>(`[data-attempt="${attempt}"]`)
-				?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-		});
+		const viewport = tableViewport;
+		if (!viewport) return;
+
+		const rowTop = TABLE_HEADER_HEIGHT + (attempt - 1) * TABLE_ROW_HEIGHT;
+		const rowBottom = rowTop + TABLE_ROW_HEIGHT;
+		const visibleTop = viewport.scrollTop + TABLE_HEADER_HEIGHT;
+		const visibleBottom = viewport.scrollTop + viewport.clientHeight;
+
+		if (rowTop < visibleTop) {
+			viewport.scrollTop = Math.max(0, rowTop - TABLE_HEADER_HEIGHT);
+		} else if (rowBottom > visibleBottom) {
+			viewport.scrollTop = rowBottom - viewport.clientHeight;
+		}
+
+		tableScrollTop = viewport.scrollTop;
 	}
 </script>
 
@@ -106,7 +158,7 @@
 									size="sm"
 									onclick={() => {
 										targetPercentage = preset;
-										clearHighlight();
+										commitTarget(preset);
 									}}
 								>
 									{preset}%
@@ -164,7 +216,12 @@
 			</header>
 
 			{#if result}
-				<div class="min-h-0 flex-1 overflow-auto" bind:this={tableViewport}>
+				<div
+					class="min-h-0 flex-1 overflow-auto [overflow-anchor:none]"
+					bind:this={tableViewport}
+					bind:clientHeight={tableViewportHeight}
+					onscroll={(event) => (tableScrollTop = event.currentTarget.scrollTop)}
+				>
 					<Table.Root class="table-fixed">
 						<Table.Caption class="sr-only">Probability metrics by attempt</Table.Caption>
 						<Table.Header class="sticky top-0 z-10 bg-background">
@@ -176,11 +233,19 @@
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
-							{#each result.rows as row (row.attempt)}
+							{#if virtualTable.topPadding > 0}
+								<Table.Row aria-hidden="true" class="border-0 hover:bg-transparent">
+									<Table.Cell colspan={4} class="p-0" style="height: {virtualTable.topPadding}px"
+									></Table.Cell>
+								</Table.Row>
+							{/if}
+
+							{#each virtualTable.rows as row (row.attempt)}
 								<Table.Row
 									data-attempt={row.attempt}
 									tabindex={0}
 									aria-selected={highlightedAttempt === row.attempt}
+									style="height: {TABLE_ROW_HEIGHT}px"
 									class={row.attempt === result.cumulativeCertainAttempt
 										? highlightedAttempt === row.attempt
 											? 'bg-chart-3/20 hover:bg-chart-3/20'
@@ -193,18 +258,29 @@
 									onfocus={() => (highlightedAttempt = row.attempt)}
 									onblur={() => (highlightedAttempt = null)}
 								>
-									<Table.Cell class="px-3 font-medium tabular-nums">{row.attempt}</Table.Cell>
-									<Table.Cell class="px-2 text-right text-chart-1 tabular-nums">
+									<Table.Cell class="h-9 px-3 py-0 font-medium tabular-nums">
+										{row.attempt}
+									</Table.Cell>
+									<Table.Cell class="h-9 px-2 py-0 text-right text-chart-1 tabular-nums">
 										{formatPercent(row.conditionalChance)}
 									</Table.Cell>
-									<Table.Cell class="px-2 text-right text-chart-2 tabular-nums">
+									<Table.Cell class="h-9 px-2 py-0 text-right text-chart-2 tabular-nums">
 										{formatPercent(row.exactChance)}
 									</Table.Cell>
-									<Table.Cell class="px-3 text-right font-medium text-chart-3 tabular-nums">
+									<Table.Cell
+										class="h-9 px-3 py-0 text-right font-medium text-chart-3 tabular-nums"
+									>
 										{formatPercent(row.cumulativeChance)}
 									</Table.Cell>
 								</Table.Row>
 							{/each}
+
+							{#if virtualTable.bottomPadding > 0}
+								<Table.Row aria-hidden="true" class="border-0 hover:bg-transparent">
+									<Table.Cell colspan={4} class="p-0" style="height: {virtualTable.bottomPadding}px"
+									></Table.Cell>
+								</Table.Row>
+							{/if}
 						</Table.Body>
 					</Table.Root>
 				</div>
