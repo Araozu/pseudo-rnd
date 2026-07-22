@@ -180,7 +180,13 @@
 									data-attempt={row.attempt}
 									tabindex={0}
 									aria-selected={highlightedAttempt === row.attempt}
-									class={highlightedAttempt === row.attempt ? 'bg-muted' : ''}
+									class={row.isCertainByNow
+										? highlightedAttempt === row.attempt
+											? 'bg-chart-3/20 hover:bg-chart-3/20'
+											: 'bg-chart-3/10 hover:bg-chart-3/15'
+										: highlightedAttempt === row.attempt
+											? 'bg-muted'
+											: ''}
 									onmouseenter={() => (highlightedAttempt = row.attempt)}
 									onmouseleave={() => (highlightedAttempt = null)}
 									onfocus={() => (highlightedAttempt = row.attempt)}
